@@ -2,8 +2,8 @@
 
 1. Run server: ```python2.7 -m CGIHTTPServer 8000```
 2. Install postgreAQL: ```sudo apt-get install postgresql postgresql-contrib```
-  i. Run postgreAQL: ```sudo -i -u postgres```
-  ii. please reset password to "postgres" use command: ```\password postgres```
+  - Run postgreAQL: ```sudo -i -u postgres```
+  - Please reset password to "postgres" use command: ```\password postgres```
   Create table: 
   ```
   CREATE TABLE account (
