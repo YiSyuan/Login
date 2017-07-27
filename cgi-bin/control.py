@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 import cgi
 import psycopg2
+import socket
 
 def main():
-    conn, cur = conndb()
+    conn, cur = connDB()
     form = cgi.FieldStorage()
     page = form['page'].value
     if page == 'signin':
-        signin(form, conn, cur)
-    else:
-        signup(form, conn, cur)
+        signIn(form, conn, cur)
+    elif page == 'signup':
+        signUp(form, conn, cur)
+    elif page == 'signout':
+        signOut(form, conn, cur)
 
-def conndb():
+def connDB():
     connection = "dbname='postgres' user='postgres' host='localhost' password='postgres'"
     try:
         conn = psycopg2.connect(connection)
@@ -19,6 +22,20 @@ def conndb():
         print "Connect to the database fail"
     cur = conn.cursor()
     return conn, cur
+
+def getUser():
+    conn, cur = connDB()
+    ip = socket.gethostbyname(socket.gethostname())
+    sql = "SELECT user_account, first_name, last_name FROM account JOIN signin ON (account.user_account = signin.account) where signin.ip = '%s'" % (ip)
+    cur.execute(sql)
+    rows = cur.fetchall()
+    if len(rows) == 1:
+        cur.close()
+        return rows[0][0], rows[0][1], rows[0][2]
+    else:
+        cur.close()
+        msg = "Your not user, please sign up."
+        redirect('signup.py', msg)
 
 def redirect(url, msg):
     print "Content-Type: text/plain"
@@ -28,22 +45,36 @@ def redirect(url, msg):
     print
     print "Redirecting..."
 
-def signin(form, conn, cur):
+def signIn(form, conn, cur):
     account = form['account'].value
     pwd = form['pwd'].value
+    ip = socket.gethostbyname(socket.gethostname())
     sql = "SELECT * FROM account WHERE user_account = '%s' and user_password = '%s'" % (account, pwd)
     cur.execute(sql)
     rows = cur.fetchall()
     if len(rows) == 1:
+        sql = "INSERT INTO signin(account, password, ip) values (%s, %s, %s)"
+        data = (account, pwd, ip)
+        cur.execute(sql, data)
+        conn.commit()
+        cur.close()
         msg = "Sign in success."
         redirect('userDetail.py', msg)
     else:
-        msg = "No this account, please sign up"
+        cur.close()
+        msg = "No this account, please sign in again or sign up"
         redirect('signup.py', msg)
+
+def signOut(form, conn, cur):
+    ip = socket.gethostbyname(socket.gethostname())
+    sql = "DELETE FROM signin WHERE ip = '%s'" % (ip)
+    cur.execute(sql)
     conn.commit()
     cur.close()
+    msg = "Sign out..."
+    redirect('home.py', msg)
 
-def signup(form, conn, cur):
+def signUp(form, conn, cur):
     account = form['account'].value
     pwd = form['pwd'].value
     firstName = form['firstName'].value
@@ -63,4 +94,5 @@ def signup(form, conn, cur):
         msg = "Sign up success, please sign in."
         redirect('home.py', msg)
 
-main()
+if __name__ == "__main__":
+    main()
