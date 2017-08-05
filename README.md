@@ -18,7 +18,8 @@
   CREATE TABLE signin (
       id serial PRIMARY KEY,
       account varchar (50) NOT NULL,
-      password varchar (100) NOT NULL
+      password varchar (100) NOT NULL,
+      ip varchar (50) NOT NULL
   );
   ```
 3. Python need to import psycopg2 use command: ```sudo apt-get install python-psycopg2```
